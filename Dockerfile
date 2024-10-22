@@ -10,11 +10,8 @@ WORKDIR /app
 # Copy package.json and bun.lockb
 COPY package.json bun.lockb ./
 
-# Set environment to production
-ENV NODE_ENV=production
-
 # Install dependencies
-RUN bun install --production
+RUN bun install
 
 # Copy the rest of the application code
 COPY . .
