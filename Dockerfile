@@ -1,6 +1,9 @@
 # First stage: Build the application
 FROM oven/bun:slim AS builder
 
+# Set up to use GitHub Container Registry
+LABEL org.opencontainers.image.source="https://github.com/thedannicraft/quickdrop"
+
 # Set the working directory
 WORKDIR /app
 
