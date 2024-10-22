@@ -40,8 +40,25 @@ jobs:
         env:
           GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
 
-      - name: 🏗️ Build the Docker image
-        run: docker build -t ghcr.io/${{ github.repository }}/quickdrop:${{ github.event.inputs.tag }} .
+      - name: 🔍 Verify Dockerfile exists
+        run: test -f Dockerfile
 
-      - name: 📤 Push the Docker image
-        run: docker push ghcr.io/${{ github.repository }}/quickdrop:${{ github.event.inputs.tag }}
+      - name: 🔧 Set up Docker Buildx
+        uses: docker/setup-buildx-action@v2
+
+      - name: 🏗️ Build and push
+        uses: docker/build-push-action@v4
+        with:
+          context: .
+          push: true
+          tags: ghcr.io/${{ github.repository }}/quickdrop:${{ github.event.inputs.tag }}
+
+      - name: 🛡️ Run Trivy vulnerability scanner
+        uses: aquasecurity/trivy-action@master
+        with:
+          image-ref: "ghcr.io/${{ github.repository }}/quickdrop:${{ github.event.inputs.tag }}"
+          format: "table"
+          exit-code: "1"
+          ignore-unfixed: true
+          vuln-type: "os,library"
+          severity: "CRITICAL,HIGH"
