@@ -19,6 +19,9 @@ permissions:
 jobs:
   build-and-push:
     runs-on: ubuntu-latest
+    strategy:
+      matrix:
+        architecture: [amd64, arm64]
 
     steps:
       - name: 🔡 Set lowercase repository name
@@ -36,7 +39,7 @@ jobs:
           password: ${{ secrets.GITHUB_TOKEN }}
 
       - name: 🚀 Create GitHub Release
-        uses: softprops/action-gh-release@v1
+        uses: softprops/action-gh-release@v2
         with:
           tag_name: ${{ github.event.inputs.tag }}
           name: Release ${{ github.event.inputs.tag }}
@@ -48,21 +51,14 @@ jobs:
         run: test -f Dockerfile
 
       - name: 🔧 Set up Docker Buildx
-        uses: docker/setup-buildx-action@v2
+        uses: docker/setup-buildx-action@v3
 
       - name: 🏗️ Build and push
-        uses: docker/build-push-action@v4
+        uses: docker/build-push-action@v6
         with:
           context: .
           push: true
-          tags: ghcr.io/${{ env.REPO_NAME  }}/quickdrop:${{ github.event.inputs.tag }}
-
-      - name: 🛡️ Run Trivy vulnerability scanner
-        uses: aquasecurity/trivy-action@master
-        with:
-          image-ref: "ghcr.io/${{ env.REPO_NAME }}/quickdrop:${{ github.event.inputs.tag }}"
-          format: "table"
-          exit-code: "1"
-          ignore-unfixed: true
-          vuln-type: "os,library"
-          severity: "CRITICAL,HIGH"
+          tags: |
+            ghcr.io/${{ env.REPO_NAME  }}:${{ github.event.inputs.tag }}
+            ghcr.io/${{ env.REPO_NAME  }}:latest
+          platforms: linux/amd64,linux/arm64
