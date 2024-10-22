@@ -1,0 +1,47 @@
+name: Build and Release
+
+on:
+  workflow_dispatch:
+    inputs:
+      tag:
+        description: "Tag for the release"
+        required: true
+        default: "latest"
+      release_description:
+        description: "Description for the release"
+        required: true
+        default: "Automated release"
+
+permissions:
+  contents: write
+  packages: write
+
+jobs:
+  build-and-push:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: 📥 Check out the repository
+        uses: actions/checkout@v4
+
+      - name: 🔑 Log in to GitHub Container Registry
+        uses: docker/login-action@v2
+        with:
+          registry: ghcr.io
+          username: ${{ github.actor }}
+          password: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: 🚀 Create GitHub Release
+        uses: softprops/action-gh-release@v1
+        with:
+          tag_name: ${{ github.event.inputs.tag }}
+          name: Release ${{ github.event.inputs.tag }}
+          body: ${{ github.event.inputs.release_description }}
+        env:
+          GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+
+      - name: 🏗️ Build the Docker image
+        run: docker build -t ghcr.io/${{ github.repository }}/quickdrop:${{ github.event.inputs.tag }} .
+
+      - name: 📤 Push the Docker image
+        run: docker push ghcr.io/${{ github.repository }}/quickdrop:${{ github.event.inputs.tag }}
