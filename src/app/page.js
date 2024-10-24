@@ -1,6 +1,6 @@
 "use client"
 
-import { Anchor, Center, Checkbox, Divider, Group, Modal, Paper, rem, Space, Stack, Text, TextInput } from "@mantine/core";
+import { Anchor, Button, Center, Checkbox, Divider, Flex, Group, HoverCard, Image, List, Modal, Paper, rem, Space, Stack, Text, TextInput } from "@mantine/core";
 import { Dropzone } from "@mantine/dropzone";
 import { IconCircleCheck, IconCircleCheckFilled, IconFile, IconUpload, IconX } from "@tabler/icons-react";
 import { useEffect, useState } from "react";
@@ -13,6 +13,7 @@ import { useQRCode } from 'next-qrcode';
 export default function Home() {
   const [keyError, setKeyError] = useState(false);
   const [code, setCode] = useState('');
+  const [files, setFiles] = useState([]);
   const [keepLonger, setKeepLonger] = useState(false);
   const [loading, setLoading] = useState(false);
   const [downloadcCode, setDownloadCode] = useState('');
@@ -29,6 +30,7 @@ export default function Home() {
   }, [searchParams]);
   let pendingFiles = null;
   const SECRET_PHRASE = "confirm";
+  const MAX_FILE_SIZE = 25 * 1024 * 1024; // 25MB limit
   let userPhrase = '';
 
   document.addEventListener('keydown', async function handleKeydown(event) {
@@ -40,7 +42,7 @@ export default function Home() {
         color: 'blue',
       });
 
-      handleDrop(pendingFiles, true)
+      handleUpload(pendingFiles, true)
 
       // Clear the pending files and reset the user phrase
       pendingFiles = null;
@@ -100,7 +102,7 @@ export default function Home() {
     }
   };
 
-  async function handleDrop(files, skipSizeCheck) {
+  async function handleUpload(files, skipSizeCheck) {
     setLoading(true);
     const serializableFiles = await Promise.all(Array.from(files).map(async file => ({
       name: file.name,
@@ -111,7 +113,6 @@ export default function Home() {
     })));
 
     const totalSize = serializableFiles.reduce((acc, file) => acc + file.size, 0);
-    const MAX_FILE_SIZE = 25 * 1024 * 1024; // 25MB limit
 
     if (!skipSizeCheck) {
       if (totalSize > MAX_FILE_SIZE) {
@@ -136,7 +137,8 @@ export default function Home() {
   return (
     <>
       <Center className="grow-y">
-        <Paper shadow="xs" p="xl">
+        <Paper shadow="xs" p="xl" withBorder style={{ borderColor: '#1a65a3' }}>
+          <Image src="/QuickDropIconText.svg" />
           <TextInput
             label="Enter a download key"
             placeholder="K923HE"
@@ -166,7 +168,20 @@ export default function Home() {
           />
           <Space h="xs" />
           <Dropzone
-            onDrop={(files) => handleDrop(files, false)}
+            onDrop={(droppedFiles) => {
+              const newFiles = Array.from(droppedFiles).map(file => {
+                let fileName = file.name;
+                let counter = 1;
+                while (files.some(f => f.name === fileName)) {
+                  const nameParts = file.name.split('.');
+                  const extension = nameParts.pop();
+                  fileName = `${nameParts.join('.')}_${counter}.${extension}`;
+                  counter++;
+                }
+                return new File([file], fileName, { type: file.type, lastModified: file.lastModified });
+              });
+              setFiles(prevFiles => [...prevFiles, ...newFiles]);
+            }}
             loading={loading}
           >
             <Group justify="center" gap="xl" mih={220} style={{ pointerEvents: 'none' }}>
@@ -194,7 +209,25 @@ export default function Home() {
               </Text>
             </Group>
           </Dropzone>
+          <Space h="xs" />
+          <Flex justify="space-between">
+            <HoverCard>
+              <HoverCard.Target>
+                <Text>{files.length} file{files.length !== 1 ? 's' : ''} selected</Text>
+              </HoverCard.Target>
+              {files.length > 0 && (
+                <HoverCard.Dropdown>
+                  <List style={{ maxHeight: '190px', overflowY: 'auto' }}>
+                    {files.map((file, index) => (
+                      <List.Item key={index}>{file.name}</List.Item>
+                    ))}
+                  </List>
+                </HoverCard.Dropdown>
+              )}
+            </HoverCard>
 
+            <Button disabled={files.length > 0 ? false : true} color="#1a65a3" onClick={() => { handleUpload(files) }} leftSection={<IconUpload />}>Upload</Button>
+          </Flex>
         </Paper>
       </Center>
 
