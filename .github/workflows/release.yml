@@ -61,4 +61,4 @@ jobs:
           tags: |
             ghcr.io/${{ env.REPO_NAME  }}:${{ github.event.inputs.tag }}
             ghcr.io/${{ env.REPO_NAME  }}:latest
-          platforms: linux/amd64,linux/arm64
+          platforms: linux/${{ matrix.architecture }}
