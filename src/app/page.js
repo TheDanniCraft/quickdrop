@@ -3,12 +3,15 @@
 import { Anchor, Button, Center, Checkbox, Divider, Flex, Group, HoverCard, Image, List, Modal, Paper, rem, Space, Stack, Text, TextInput } from "@mantine/core";
 import { Dropzone } from "@mantine/dropzone";
 import { IconCircleCheck, IconCircleCheckFilled, IconFile, IconUpload, IconX } from "@tabler/icons-react";
-import { useEffect, useState } from "react";
+import { useEffect, useState, useCallback } from "react";
 import { getFiles, saveFiles, purgeOldFolders } from "./action";
 import { notifications } from "@mantine/notifications";
 import { useSearchParams } from 'next/navigation';
 import { useDisclosure } from "@mantine/hooks";
 import { useQRCode } from 'next-qrcode';
+
+const SECRET_PHRASE = "confirm";
+const MAX_FILE_SIZE = 25 * 1024 * 1024; // 25MB limit
 
 export default function Home() {
   const [keyError, setKeyError] = useState(false);
@@ -16,51 +19,14 @@ export default function Home() {
   const [files, setFiles] = useState([]);
   const [keepLonger, setKeepLonger] = useState(false);
   const [loading, setLoading] = useState(false);
-  const [downloadcCode, setDownloadCode] = useState('');
+  const [downloadCode, setDownloadCode] = useState('');
+  const [pendingFiles, setPendingFiles] = useState(null);
+  const [userPhrase, setUserPhrase] = useState('');
   const [opened, { open, close }] = useDisclosure(false);
   const searchParams = useSearchParams();
   const { SVG } = useQRCode();
 
-  useEffect(() => {
-    const codeParam = searchParams.get('code');
-    if (codeParam) {
-      setCode(codeParam.toUpperCase());
-      handleInputChange(codeParam.toUpperCase());
-    }
-  }, [searchParams]);
-  let pendingFiles = null;
-  const SECRET_PHRASE = "confirm";
-  const MAX_FILE_SIZE = 25 * 1024 * 1024; // 25MB limit
-  let userPhrase = '';
-
-  document.addEventListener('keydown', async function handleKeydown(event) {
-    if (pendingFiles) userPhrase += event.key.toLowerCase();
-    if (userPhrase.includes(SECRET_PHRASE) && pendingFiles) {
-      notifications.show({
-        title: 'Notice',
-        message: 'Bypassing file size limit!',
-        color: 'blue',
-      });
-
-      handleUpload(pendingFiles, true)
-
-      // Clear the pending files and reset the user phrase
-      pendingFiles = null;
-      userPhrase = '';
-    }
-  });
-
-  useEffect(() => {
-    const interval = setInterval(() => {
-      purgeOldFolders();
-    }, 60000); // 60000 milliseconds = 1 minute
-
-    purgeOldFolders();
-
-    return () => clearInterval(interval);
-  }, []);
-
-  async function handleInputChange(newCode) {
+  const handleInputChange = useCallback(async (newCode) => {
     setKeyError(false);
 
     if (newCode.length === 6) {
@@ -70,7 +36,7 @@ export default function Home() {
         const files = await getFiles(newCode);
 
         if (!files) {
-          setKeyError('No files found')
+          setKeyError('No files found');
           setLoading(false);
           return;
         }
@@ -100,9 +66,9 @@ export default function Home() {
         setLoading(false);
       }
     }
-  };
+  }, []);
 
-  async function handleUpload(files, skipSizeCheck) {
+  const handleUpload = useCallback(async (files, skipSizeCheck = false) => {
     setLoading(true);
     const serializableFiles = await Promise.all(Array.from(files).map(async file => ({
       name: file.name,
@@ -114,43 +80,82 @@ export default function Home() {
 
     const totalSize = serializableFiles.reduce((acc, file) => acc + file.size, 0);
 
-    if (!skipSizeCheck) {
-      if (totalSize > MAX_FILE_SIZE) {
-        notifications.show({
-          title: 'Error',
-          message: 'Upload size exceeds the limit. Please contact a team member.',
-          color: 'red',
-        });
+    if (!skipSizeCheck && totalSize > MAX_FILE_SIZE) {
+      notifications.show({
+        title: 'Error',
+        message: 'Upload size exceeds the limit. Please contact a team member.',
+        color: 'red',
+      });
 
-        pendingFiles = files;
-        userPhrase = '';
-        setLoading(false);
-        return;
-      }
+      setPendingFiles(files);
+      setUserPhrase('');
+      setLoading(false);
+      return;
     }
 
     setDownloadCode(await saveFiles(serializableFiles, keepLonger ? (7 * 24) : 2));
-    open()
+    open();
     setLoading(false);
-  }
+  }, [keepLonger, open]);
+
+  useEffect(() => {
+    const codeParam = searchParams.get('code');
+    if (codeParam) {
+      setCode(codeParam.toUpperCase());
+      handleInputChange(codeParam.toUpperCase());
+    }
+  }, [searchParams, handleInputChange]);
+
+  useEffect(() => {
+    const handleKeydown = async (event) => {
+      if (pendingFiles) setUserPhrase(prev => prev + event.key.toLowerCase());
+      if (userPhrase.includes(SECRET_PHRASE) && pendingFiles) {
+        notifications.show({
+          title: 'Notice',
+          message: 'Bypassing file size limit!',
+          color: 'blue',
+        });
+
+        await handleUpload(pendingFiles, true);
+
+        // Clear the pending files and reset the user phrase
+        setPendingFiles(null);
+        setUserPhrase('');
+      }
+    };
+
+    document.addEventListener('keydown', handleKeydown);
+    return () => document.removeEventListener('keydown', handleKeydown);
+  }, [pendingFiles, userPhrase, handleUpload]);
+
+  useEffect(() => {
+    const interval = setInterval(purgeOldFolders, 60000); // 60000 milliseconds = 1 minute
+    purgeOldFolders();
+
+    return () => clearInterval(interval);
+  }, []);
 
   return (
     <>
       <Center className="grow-y">
         <Paper shadow="xs" p="xl" withBorder style={{ borderColor: '#1a65a3' }}>
-          <Image src="/QuickDropIconText.svg" />
+          <Center>
+            <Image h={150} w="auto" fit="contain" src="/QuickDropIconText.svg" />
+          </Center>
+          <Space h="xs" />
           <TextInput
             label="Enter a download key"
             placeholder="K923HE"
             maxLength={6}
             required
             onChange={async (event) => {
-              await setCode(event.target.value.toUpperCase());
-              handleInputChange(event.target.value.toUpperCase())
+              const newCode = event.target.value.toUpperCase();
+              setCode(newCode);
+              handleInputChange(newCode);
             }}
             onPaste={async (event) => {
               const pastedText = event.clipboardData.getData('Text').toUpperCase();
-              await setCode(pastedText);
+              setCode(pastedText);
               handleInputChange(pastedText);
             }}
             value={code}
@@ -226,7 +231,7 @@ export default function Home() {
               )}
             </HoverCard>
 
-            <Button disabled={files.length > 0 ? false : true} color="#1a65a3" onClick={() => { handleUpload(files) }} leftSection={<IconUpload />}>Upload</Button>
+            <Button disabled={files.length === 0} color="#1a65a3" onClick={() => handleUpload(files)} leftSection={<IconUpload />}>Upload</Button>
           </Flex>
         </Paper>
       </Center>
@@ -235,7 +240,7 @@ export default function Home() {
         <Stack>
           <Center>
             <SVG
-              text={`${window.location.origin}?code=${downloadcCode}`}
+              text={`${window.location.origin}?code=${downloadCode}`}
               options={{
                 level: 'M',
                 margin: 3,
@@ -251,7 +256,7 @@ export default function Home() {
 
           <Text>Your file was successfully saved. Use the following code to download it:</Text>
           <Center>
-            <Text fw={1000}>{downloadcCode}</Text>
+            <Text fw={1000}>{downloadCode}</Text>
           </Center>
           <Text size="xs">Your file expires on {new Date(Date.now() + (keepLonger ? (7 * 24) : 2) * 60 * 60 * 1000).toLocaleString()}</Text>
         </Stack>
