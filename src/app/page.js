@@ -1,8 +1,8 @@
 "use client"
 
-import { Anchor, Button, Center, Checkbox, Divider, Flex, Group, HoverCard, Image, List, Modal, Paper, rem, Space, Stack, Text, TextInput } from "@mantine/core";
+import { ActionIcon, Anchor, Button, Center, Checkbox, Divider, Flex, Group, HoverCard, Image, List, Modal, Paper, rem, Space, Stack, Text, TextInput } from "@mantine/core";
 import { Dropzone } from "@mantine/dropzone";
-import { IconCircleCheck, IconCircleCheckFilled, IconFile, IconUpload, IconX } from "@tabler/icons-react";
+import { IconCircleCheck, IconCircleCheckFilled, IconFile, IconShare, IconUpload, IconX } from "@tabler/icons-react";
 import { useEffect, useState, useCallback } from "react";
 import { getFiles, saveFiles, purgeOldFolders } from "./action";
 import { notifications } from "@mantine/notifications";
@@ -96,6 +96,7 @@ export default function Home() {
     setDownloadCode(await saveFiles(serializableFiles, keepLonger ? (7 * 24) : 2));
     open();
     setLoading(false);
+    setFiles([]);
   }, [keepLonger, open]);
 
   useEffect(() => {
@@ -138,7 +139,7 @@ export default function Home() {
   return (
     <>
       <Center className="grow-y">
-        <Paper shadow="xs" p="xl" withBorder style={{ borderColor: '#1a65a3' }}>
+        <Paper shadow="xs" p="xl" radius="lg" withBorder style={{ borderColor: '#1a65a3' }}>
           <Center>
             <Image h={150} w="auto" fit="contain" src="/QuickDropIconText.svg" />
           </Center>
@@ -157,6 +158,11 @@ export default function Home() {
               const pastedText = event.clipboardData.getData('Text').toUpperCase();
               setCode(pastedText);
               handleInputChange(pastedText);
+            }}
+            onKeyDown={(event) => {
+              if (event.key === 'Enter') {
+                handleInputChange(code);
+              }
             }}
             value={code}
             error={keyError}
@@ -257,6 +263,30 @@ export default function Home() {
           <Text>Your file was successfully saved. Use the following code to download it:</Text>
           <Center>
             <Text fw={1000}>{downloadCode}</Text>
+            <Space w="xs" />
+            <ActionIcon
+              size="xs"
+              onClick={() => {
+                if (navigator.share) {
+                  navigator.share({
+                    title: 'Someone quickdropped a file to you!',
+                    text: 'Use the following link to download the file:',
+                    url: `${window.location.origin}?code=${downloadCode}`,
+                  }).catch((error) => {
+                    console.error('Error sharing:', error);
+                  });
+                } else {
+                  notifications.show({
+                    title: 'Error',
+                    message: 'Sharing is not supported on this browser.',
+                    color: 'red',
+                  });
+                }
+              }}
+              variant="transparent"
+            >
+              <IconShare />
+            </ActionIcon>
           </Center>
           <Text size="xs">Your file expires on {new Date(Date.now() + (keepLonger ? (7 * 24) : 2) * 60 * 60 * 1000).toLocaleString()}</Text>
         </Stack>
