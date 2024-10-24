@@ -5,8 +5,8 @@ export default function manifest() {
         description: 'Quickly share files with others',
         start_url: '/',
         display: 'standalone',
-        background_color: '#ffffff',
-        theme_color: '#ffffff',
+        background_color: '#242424',
+        theme_color: '#242424',
         icons: [
             {
                 src: '/web-app-manifest-192x192.png',
