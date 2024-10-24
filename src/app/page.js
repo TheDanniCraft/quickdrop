@@ -11,7 +11,8 @@ import { useDisclosure } from "@mantine/hooks";
 import { useQRCode } from 'next-qrcode';
 
 const SECRET_PHRASE = "confirm";
-const MAX_FILE_SIZE = 25 * 1024 * 1024; // 25MB limit
+const MAX_FILE_SIZE = 25 * 1000 * 1000; // 25MB limit
+const SIZE_UNITS = ['B', 'KB', 'MB', 'GB'];
 
 export default function Home() {
   const [keyError, setKeyError] = useState(false);
@@ -139,9 +140,16 @@ export default function Home() {
   return (
     <>
       <Center className="grow-y">
-        <Paper shadow="xs" p="xl" radius="lg" withBorder style={{ borderColor: '#1a65a3' }}>
+        <Paper shadow="xs" p="xl" radius="lg" withBorder style={{ borderColor: '#1a65a3' }} className="main">
           <Center>
-            <Image h={150} w="auto" fit="contain" src="/QuickDropIconText.svg" />
+            <Image
+              h={150}
+              w="auto"
+              fit="contain"
+              src="/QuickDropIconText.svg"
+              onClick={() => window.location.href = window.location.origin}
+              style={{ cursor: 'pointer' }}
+            />
           </Center>
           <Space h="xs" />
           <TextInput
@@ -215,7 +223,7 @@ export default function Home() {
                 />
               </Dropzone.Idle>
 
-              <Text size="xl" inline>
+              <Text inline>
                 Drag files here or click to select files
               </Text>
             </Group>
@@ -224,7 +232,9 @@ export default function Home() {
           <Flex justify="space-between">
             <HoverCard>
               <HoverCard.Target>
-                <Text>{files.length} file{files.length !== 1 ? 's' : ''} selected</Text>
+                <Text>
+                  {files.length} file{files.length !== 1 ? 's' : ''} selected ({files.length > 0 ? (files.reduce((acc, file) => acc + file.size, 0) / Math.pow(1000, Math.floor(Math.log2(files.reduce((acc, file) => acc + file.size, 0)) / 10))).toFixed(2) : 0} {files.length > 0 ? SIZE_UNITS[Math.floor(Math.log2(files.reduce((acc, file) => acc + file.size, 0)) / 10)] : 'B'})
+                </Text>
               </HoverCard.Target>
               {files.length > 0 && (
                 <HoverCard.Dropdown>
