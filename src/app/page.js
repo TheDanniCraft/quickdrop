@@ -110,19 +110,23 @@ export default function Home() {
 
   useEffect(() => {
     const handleKeydown = async (event) => {
-      if (pendingFiles) setUserPhrase(prev => prev + event.key.toLowerCase());
-      if (userPhrase.includes(SECRET_PHRASE) && pendingFiles) {
-        notifications.show({
-          title: 'Notice',
-          message: 'Bypassing file size limit!',
-          color: 'blue',
-        });
+      if (pendingFiles) {
+        const newPhrase = userPhrase + event.key.toLowerCase();
+        setUserPhrase(newPhrase);
+        console.log(newPhrase);
+        if (newPhrase.includes(SECRET_PHRASE)) {
+          notifications.show({
+            title: 'Notice',
+            message: 'Bypassing file size limit!',
+            color: 'blue',
+          });
 
-        await handleUpload(pendingFiles, true);
+          await handleUpload(pendingFiles, true);
 
-        // Clear the pending files and reset the user phrase
-        setPendingFiles(null);
-        setUserPhrase('');
+          // Clear the pending files and reset the user phrase
+          setPendingFiles(null);
+          setUserPhrase('');
+        }
       }
     };
 
@@ -240,7 +244,19 @@ export default function Home() {
                 <HoverCard.Dropdown>
                   <List style={{ maxHeight: '190px', overflowY: 'auto' }}>
                     {files.map((file, index) => (
-                      <List.Item key={index}>{file.name}</List.Item>
+                      <List.Item key={index}>
+                        <Flex justify="space-between" align="center">
+                          <ActionIcon
+                            size="xs"
+                            color="red"
+                            variant="transparent"
+                            onClick={() => setFiles(files.filter((_, i) => i !== index))}
+                          >
+                            <IconX size={12} />
+                          </ActionIcon>
+                          <Text>{file.name}</Text>
+                        </Flex>
+                      </List.Item>
                     ))}
                   </List>
                 </HoverCard.Dropdown>

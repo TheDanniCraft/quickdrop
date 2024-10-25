@@ -47,7 +47,7 @@ export async function getFiles(code) {
 
     if (fs.existsSync(folderPath)) {
         const archive = archiver('zip', {
-            zlib: { level: 9 }
+            zlib: { level: 1 }
         });
 
         return new Promise((resolve, reject) => {
