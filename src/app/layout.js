@@ -4,6 +4,8 @@ import '@mantine/dropzone/styles.css';
 import '@mantine/notifications/styles.css';
 import { createTheme, MantineProvider, ColorSchemeScript } from '@mantine/core';
 import { Notifications } from "@mantine/notifications";
+import { NextIntlClientProvider } from 'next-intl';
+import { getLocale, getMessages } from 'next-intl/server';
 import { Suspense } from "react";
 
 export const metadata = {
@@ -15,9 +17,12 @@ const theme = createTheme({
 
 });
 
-export default function RootLayout({ children }) {
+export default async function RootLayout({ children }) {
+  const locale = await getLocale();
+  const messages = await getMessages();
+
   return (
-    <html lang="en">
+    <html lang={locale}>
       <head>
         <ColorSchemeScript />
         <link rel="icon" type="image/png" href="/favicon-48x48.png" sizes="48x48" />
@@ -30,10 +35,12 @@ export default function RootLayout({ children }) {
       </head>
       <body>
         <Suspense>
-          <MantineProvider theme={theme} forceColorScheme="dark">
-            <Notifications />
-            {children}
-          </MantineProvider>
+          <NextIntlClientProvider messages={messages}>
+            <MantineProvider theme={theme} forceColorScheme="dark">
+              <Notifications />
+              {children}
+            </MantineProvider>
+          </NextIntlClientProvider>
         </Suspense>
       </body>
     </html>

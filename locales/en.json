@@ -1,0 +1,27 @@
+{
+	"Home": {
+		"enterDownloadKey": "Enter a download key",
+		"or": "or",
+		"preserveFiles": "Preserve files for 7 days",
+		"preserveFilesDescription": "By default files are kept for 2 hours",
+		"dragFiles": "Drag files here or click to select files",
+		"filesSelected": "{count} file{count, plural, one {} other {s}} selected ({size} {unit})",
+		"upload": "Upload",
+		"fileSaved": "File saved!",
+		"fileSavedMessage": "Your file was successfully saved. Use the following code to download it:",
+		"shareTitle": "Someone quickdropped a file to you!",
+		"shareText": "Use the following link to download the file:",
+		"shareNotSupported": "Sharing is not supported on this browser.",
+		"fileExpires": "Your file expires on {date}",
+		"noFilesFound": "No files found",
+		"invalidKey": "Invalid key",
+		"success": "Success",
+		"fileDownloadStart": "File download should start soon...",
+		"fileDownloadClick": "If the download doesn't start click {url}",
+		"here": "here",
+		"error": "Error",
+		"uploadSizeExceeds": "Upload size exceeds the limit. Please contact a team member.",
+		"notice": "Notice",
+		"bypassingFileSizeLimit": "Bypassing file size limit!"
+	}
+}
