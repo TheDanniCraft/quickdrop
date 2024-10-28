@@ -1,27 +1,35 @@
 {
 	"Home": {
-		"enterDownloadKey": "Gib einen Download-Schlüssel ein",
-		"or": "oder",
-		"preserveFiles": "Dokumente für 7 Tage aufbewahren",
-		"preserveFilesDescription": "Standardmäßig werden Dokumente für 2 Stunden aufbewahrt",
-		"dragFiles": "Ziehe Dokumente hierher oder klicke um Dokumente auszuwählen",
-		"filesSelected": "{count} Dokument{count, plural, one {} other {e}} ausgewählt ({size} {unit})",
-		"upload": "Hochladen",
-		"fileSaved": "Dokumente gespeichert!",
-		"fileSavedMessage": "Deine Dokumente wurden erfolgreich gespeichert. Verwende den folgenden Code, um die Dokumente herunterzuladen:",
-		"shareTitle": "Jemand hat dir Dokumente per Quickdrop gesendet!",
-		"shareText": "Verwende den folgenden Link, um die Dokumente herunterzuladen:",
-		"shareNotSupported": "Teilen wird in diesem Browser nicht unterstützt.",
-		"fileExpires": "Deine Dokumente laufen ab am {date}",
-		"noFilesFound": "Keine Dokumente gefunden",
-		"invalidKey": "Ungültiger Schlüssel",
-		"success": "Erfolg",
-		"fileDownloadStart": "Der Dokumentdownload sollte bald beginnen...",
-		"fileDownloadClick": "Wenn der Download nicht startet, klicke {url}",
-		"here": "hier",
-		"error": "Fehler",
-		"uploadSizeExceeds": "Die Upload-Größe überschreitet das Limit. Bitte kontaktiere ein Teammitglied.",
-		"notice": "Hinweis",
-		"bypassingFileSizeLimit": "Dokumentgrößenlimit wird umgangen!"
+		"download": {
+			"enterDownloadKey": "Gib einen Download-Schlüssel ein",
+			"fileDownloadStart": "Der Dokumentdownload sollte bald beginnen...",
+			"fileDownloadClick": "Wenn der Download nicht startet, klicke {url}",
+			"invalidKey": "Ungültiger Schlüssel",
+			"success": "Erfolg",
+			"noFilesFound": "Keine Dokumente gefunden",
+			"fileExpires": "Deine Dokumente laufen ab am {date}"
+		},
+		"upload": {
+			"dragFiles": "Ziehe Dokumente hierher oder klicke um Dokumente auszuwählen",
+			"filesSelected": "{count} Dokument{count, plural, one {} other {e}} ausgewählt ({size} {unit})",
+			"upload": "Hochladen",
+			"fileSaved": "Dokumente gespeichert!",
+			"fileSavedMessage": "Deine Dokumente wurden erfolgreich gespeichert. Verwende den folgenden Code, um die Dokumente herunterzuladen:",
+			"uploadSizeExceeds": "Die Upload-Größe überschreitet das Limit. Bitte kontaktiere ein Teammitglied.",
+			"bypassingFileSizeLimit": "Dokumentgrößenlimit wird umgangen!"
+		},
+		"share": {
+			"shareTitle": "Jemand hat dir Dokumente per Quickdrop gesendet!",
+			"shareText": "Verwende den folgenden Link, um die Dokumente herunterzuladen:",
+			"shareNotSupported": "Teilen wird in diesem Browser nicht unterstützt."
+		},
+		"general": {
+			"or": "oder",
+			"notice": "Hinweis",
+			"error": "Fehler",
+			"here": "hier",
+			"preserveFiles": "Dokumente für {extendDuration} Tage aufbewahren",
+			"preserveFilesDescription": "Standardmäßig werden Dokumente für {defaultDuration} Stunden aufbewahrt"
+		}
 	}
 }

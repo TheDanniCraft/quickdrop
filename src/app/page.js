@@ -29,6 +29,9 @@ export default function Home() {
   const searchParams = useSearchParams();
   const { SVG } = useQRCode();
 
+  const DEFAULT_DURATION = 2; // hours
+  const EXTEND_DURATION = 7; // days
+
   const handleInputChange = useCallback(async (newCode) => {
     setKeyError(false);
 
@@ -39,7 +42,7 @@ export default function Home() {
         const files = await getFiles(newCode);
 
         if (!files) {
-          setKeyError(t('noFilesFound'));
+          setKeyError(t('download.noFilesFound'));
           setLoading(false);
           return;
         }
@@ -54,18 +57,18 @@ export default function Home() {
         a.click();
         document.body.removeChild(a);
         notifications.show({
-          title: t('success'),
+          title: t('download.success'),
           message: (
             <>
-              {t('fileDownloadStart')}<br />
-              {t('fileDownloadClick', { url: <Anchor href={url}>{t('here')}</Anchor> })}
+              {t('download.fileDownloadStart')}<br />
+              {t('download.fileDownloadClick', { url: <Anchor href={url}>{t('general.here')}</Anchor> })}
             </>
           ),
           color: 'green',
         });
         setLoading(false);
       } else {
-        setKeyError(t('invalidKey'));
+        setKeyError(t('download.invalidKey'));
         setLoading(false);
       }
     }
@@ -85,8 +88,8 @@ export default function Home() {
 
     if (!skipSizeCheck && totalSize > MAX_FILE_SIZE) {
       notifications.show({
-        title: t('error'),
-        message: t('uploadSizeExceeds'),
+        title: t('general.error'),
+        message: t('upload.uploadSizeExceeds'),
         color: 'red',
       });
 
@@ -96,7 +99,7 @@ export default function Home() {
       return;
     }
 
-    setDownloadCode(await saveFiles(serializableFiles, keepLonger ? (7 * 24) : 2));
+    setDownloadCode(await saveFiles(serializableFiles, keepLonger ? (EXTEND_DURATION * 24) : DEFAULT_DURATION));
     open();
     setLoading(false);
     setFiles([]);
@@ -118,8 +121,8 @@ export default function Home() {
         console.log(newPhrase);
         if (newPhrase.includes(SECRET_PHRASE)) {
           notifications.show({
-            title: t('notice'),
-            message: t('bypassingFileSizeLimit'),
+            title: t('general.notice'),
+            message: t('upload.bypassingFileSizeLimit'),
             color: 'blue',
           });
 
@@ -159,7 +162,7 @@ export default function Home() {
           </Center>
           <Space h="xs" />
           <TextInput
-            label={t('enterDownloadKey')}
+            label={t('download.enterDownloadKey')}
             placeholder="K923HE"
             maxLength={6}
             required
@@ -183,11 +186,11 @@ export default function Home() {
             disabled={loading}
           />
 
-          <Divider label={t('or')} />
+          <Divider label={t('general.or')} />
 
           <Checkbox
-            label={t('preserveFiles')}
-            description={t('preserveFilesDescription')}
+            label={t('general.preserveFiles', { extendDuration: EXTEND_DURATION })}
+            description={t('general.preserveFilesDescription', { defaultDuration: DEFAULT_DURATION })}
             checked={keepLonger}
             onChange={(event) => setKeepLonger(event.currentTarget.checked)}
           />
@@ -230,7 +233,7 @@ export default function Home() {
               </Dropzone.Idle>
 
               <Text inline>
-                {t('dragFiles')}
+                {t('upload.dragFiles')}
               </Text>
             </Group>
           </Dropzone>
@@ -239,7 +242,7 @@ export default function Home() {
             <HoverCard>
               <HoverCard.Target>
                 <Text>
-                  {t('filesSelected', { count: files.length, size: files.length > 0 ? (files.reduce((acc, file) => acc + file.size, 0) / Math.pow(1000, Math.floor(Math.log2(files.reduce((acc, file) => acc + file.size, 0)) / 10))).toFixed(2) : 0, unit: files.length > 0 ? SIZE_UNITS[Math.floor(Math.log2(files.reduce((acc, file) => acc + file.size, 0)) / 10)] : 'B' })}
+                  {t('upload.filesSelected', { count: files.length, size: files.length > 0 ? (files.reduce((acc, file) => acc + file.size, 0) / Math.pow(1000, Math.floor(Math.log2(files.reduce((acc, file) => acc + file.size, 0)) / 10))).toFixed(2) : 0, unit: files.length > 0 ? SIZE_UNITS[Math.floor(Math.log2(files.reduce((acc, file) => acc + file.size, 0)) / 10)] : 'B' })}
                 </Text>
               </HoverCard.Target>
               {files.length > 0 && (
@@ -265,12 +268,12 @@ export default function Home() {
               )}
             </HoverCard>
 
-            <Button disabled={files.length === 0} color="#1a65a3" onClick={() => handleUpload(files)} leftSection={<IconUpload />}>{t('upload')}</Button>
+            <Button disabled={files.length === 0} color="#1a65a3" onClick={() => handleUpload(files)} leftSection={<IconUpload />}>{t('upload.upload')}</Button>
           </Flex>
         </Paper>
       </Center>
 
-      <Modal opened={opened} onClose={close} title={t('fileSaved')}>
+      <Modal opened={opened} onClose={close} title={t('upload.fileSaved')}>
         <Stack>
           <Center>
             <SVG
@@ -288,7 +291,7 @@ export default function Home() {
             />
           </Center>
 
-          <Text>{t('fileSavedMessage')}</Text>
+          <Text>{t('upload.fileSavedMessage')}</Text>
           <Center>
             <Text fw={1000}>{downloadCode}</Text>
             <Space w="xs" />
@@ -297,16 +300,16 @@ export default function Home() {
               onClick={() => {
                 if (navigator.share) {
                   navigator.share({
-                    title: t('shareTitle'),
-                    text: t('shareText'),
+                    title: t('share.shareTitle'),
+                    text: t('share.shareText'),
                     url: `${window.location.origin}?code=${downloadCode}`,
                   }).catch((error) => {
                     console.error('Error sharing:', error);
                   });
                 } else {
                   notifications.show({
-                    title: t('error'),
-                    message: t('shareNotSupported'),
+                    title: t('general.error'),
+                    message: t('share.shareNotSupported'),
                     color: 'red',
                   });
                 }
@@ -316,7 +319,7 @@ export default function Home() {
               <IconShare />
             </ActionIcon>
           </Center>
-          <Text size="xs">{t('fileExpires', { date: new Date(Date.now() + (keepLonger ? (7 * 24) : 2) * 60 * 60 * 1000).toLocaleString() })}</Text>
+          <Text size="xs">{t('download.fileExpires', { date: new Date(Date.now() + (keepLonger ? (EXTEND_DURATION * 24) : DEFAULT_DURATION) * 60 * 60 * 1000).toLocaleString() })}</Text>
         </Stack>
       </Modal>
     </>

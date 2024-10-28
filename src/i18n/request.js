@@ -8,10 +8,9 @@ const timeZonesByLang = {
 };
 
 export default getRequestConfig(async () => {
-    const timeZone = Intl.DateTimeFormat().resolvedOptions().timeZone;
-    let locale = Object.entries(timeZonesByLang).find(([lang, zones]) =>
-        zones.includes(timeZone)
-    )?.[0] || "en";
+    const acceptLanguage = headers().get('accept-language') || 'en';
+    console.log(acceptLanguage);
+    let locale = acceptLanguage.split(',')[0].split('-')[0];
 
     try {
         // Try to load the messages for the preferred locale
