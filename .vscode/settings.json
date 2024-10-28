@@ -5,5 +5,9 @@
       "**/*.sass",
       "**/*.less",
       "node_modules/@mantine/core/styles.css"
+    ],
+    "i18n-ally.localesPaths": [
+      "locales",
+      "locales/"
     ]
   }
