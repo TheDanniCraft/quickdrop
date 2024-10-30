@@ -26,11 +26,16 @@ export default function Home() {
   const [pendingFiles, setPendingFiles] = useState(null);
   const [userPhrase, setUserPhrase] = useState('');
   const [opened, { open, close }] = useDisclosure(false);
+  const [origin, setOrigin] = useState('');
   const searchParams = useSearchParams();
   const { SVG } = useQRCode();
 
   const DEFAULT_DURATION = 2; // hours
   const EXTEND_DURATION = 7; // days
+
+  useEffect(() => {
+    setOrigin(window.location.origin);
+  }, []);
 
   const handleInputChange = useCallback(async (newCode) => {
     setKeyError(false);
@@ -208,7 +213,7 @@ export default function Home() {
               w="auto"
               fit="contain"
               src="/QuickDropIconText.svg"
-              onClick={() => window.location.href = window.location.origin}
+              onClick={() => window.location.href = origin}
               style={{ cursor: 'pointer' }}
             />
           </Center>
@@ -329,7 +334,7 @@ export default function Home() {
         <Stack>
           <Center>
             <SVG
-              text={`${window.location.origin}?code=${downloadCode}`}
+              text={`${origin}?code=${downloadCode}`}
               options={{
                 level: 'M',
                 margin: 3,
@@ -354,7 +359,7 @@ export default function Home() {
                   navigator.share({
                     title: t('share.shareTitle'),
                     text: t('share.shareText'),
-                    url: `${window.location.origin}?code=${downloadCode}`,
+                    url: `${origin}?code=${downloadCode}`,
                   }).catch((error) => {
                     console.error('Error sharing:', error);
                   });
