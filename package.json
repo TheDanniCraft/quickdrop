@@ -9,6 +9,7 @@
 		"lint": "next lint"
 	},
 	"dependencies": {
+		"@influxdata/influxdb-client": "^1.35.0",
 		"@mantine/core": "^7.13.3",
 		"@mantine/dropzone": "^7.13.3",
 		"@mantine/hooks": "^7.13.3",
@@ -18,6 +19,7 @@
 		"next": "14.2.15",
 		"next-intl": "^3.23.5",
 		"next-qrcode": "^2.5.1",
+		"node-mime-types": "^1.1.2",
 		"react": "^18",
 		"react-dom": "^18"
 	},
