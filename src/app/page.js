@@ -5,7 +5,7 @@ import { Dropzone } from "@mantine/dropzone";
 import { IconFile, IconShare, IconUpload, IconX } from "@tabler/icons-react";
 import { useEffect, useState, useCallback } from "react";
 import { useTranslations } from 'next-intl';
-import { getFiles, saveFiles, purgeOldFolders } from "./action";
+import { getFiles, saveFiles, purgeOldFolders, updateMetric } from "./action";
 import { notifications } from "@mantine/notifications";
 import { useSearchParams } from 'next/navigation';
 import { useDisclosure } from "@mantine/hooks";
@@ -140,10 +140,62 @@ export default function Home() {
   }, [pendingFiles, userPhrase, handleUpload]);
 
   useEffect(() => {
-    const interval = setInterval(purgeOldFolders, 60000); // 60000 milliseconds = 1 minute
+    const interval = setInterval(purgeOldFolders, 60000);
     purgeOldFolders();
 
     return () => clearInterval(interval);
+  }, []);
+
+  useEffect(() => {
+    let browser = 'unknown';
+    if (navigator.userAgentData?.brands) {
+      browser = navigator.userAgentData.brands[0].brand;
+    } else {
+      // Fallback to userAgent parsing
+      if (navigator.userAgent.includes("Chrome") && !navigator.userAgent.includes("Edg") && !navigator.userAgent.includes("OPR")) {
+        browser = 'Chrome';
+      } else if (navigator.userAgent.includes("Edg")) {
+        browser = 'Edge';
+      } else if (navigator.userAgent.includes("Firefox")) {
+        browser = 'Firefox';
+      } else if (navigator.userAgent.includes("Safari") && !navigator.userAgent.includes("Chrome")) {
+        browser = 'Safari';
+      } else if (navigator.userAgent.includes("OPR") || navigator.userAgent.includes("Opera")) {
+        browser = 'Opera';
+      } else if (navigator.userAgent.includes("MSIE") || !!document.documentMode) {
+        browser = 'IE';
+      }
+    }
+    const language = navigator.language || navigator.languages[0];
+
+    const OS_MAPPING = {
+      win: 'Windows',
+      mac: 'macOS',
+      linux: 'Linux',
+      android: 'Android',
+      iphone: 'iOS',
+      ipad: 'iOS',
+      ipod: 'iOS'
+    };
+
+    const os = navigator.userAgentData?.platform ||
+      Object.entries(OS_MAPPING).find(([key]) =>
+        navigator.platform.toLowerCase().includes(key) ||
+        navigator.userAgent.toLowerCase().includes(key)
+      )?.[1] || 'unknown';
+
+    const metrics = [
+      ['visitors', 1],
+      [`visitors_browser_${browser}`, 1],
+      [`visitors_language_${language}`, 1],
+      [`visitors_os_${os}`, 1]
+    ];
+
+    Promise.all(metrics.map(([name, value]) =>
+      updateMetric(name, value).catch(error =>
+        console.error(`Failed to update metric ${name}:`, error)
+      )
+    ));
   }, []);
 
   return (
