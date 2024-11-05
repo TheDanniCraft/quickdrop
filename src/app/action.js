@@ -1,6 +1,7 @@
 "use server"
 
 const fs = require('fs');
+const { statfs } = require('fs');
 const path = require('path');
 const archiver = require('archiver');
 const { InfluxDB, Point } = require('@influxdata/influxdb-client')
@@ -10,6 +11,7 @@ let client;
 if (process.env.ENABLE_METRICS) {
     if (process.env.INFLUX_URL && process.env.INFLUX_TOKEN && process.env.INFLUX_ORG && process.env.INFLUX_BUCKET) {
         client = new InfluxDB({ url: process.env.INFLUX_URL, token: process.env.INFLUX_TOKEN });
+        calculateMetrics(path.join(process.cwd(), 'data'));
     } else {
         const missingEnvVars = [];
         if (!process.env.INFLUX_URL) missingEnvVars.push('INFLUX_URL');
@@ -58,6 +60,19 @@ function generateRandomCode() {
     return result;
 }
 
+function getDiskUsage(directory) {
+    return new Promise((resolve, reject) => {
+        statfs(directory, (error, stats) => {
+            if (error) {
+                return reject(error);
+            }
+            const total = stats.blocks * stats.bsize;
+            const free = stats.bfree * stats.bsize;
+            resolve({ total, free });
+        });
+    });
+}
+
 async function calculateMetrics(dataDir) {
     let totalFiles = 0;
     let totalSize = 0;
@@ -102,6 +117,12 @@ async function calculateMetrics(dataDir) {
     for (const [mime, size] of Object.entries(fileTypeSize)) {
         await updateMetric(`file_type_${mime}`, size, false);
     }
+
+    const { total, free } = await getDiskUsage(dataDir);
+    const totalStorage = total;
+    const usedStorage = total - free;
+    await updateMetric('total_storage', totalStorage, false);
+    await updateMetric('used_storage', usedStorage, false);
 }
 
 export async function purgeOldFolders() {
