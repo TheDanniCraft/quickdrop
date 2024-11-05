@@ -23,6 +23,34 @@
 			"shareText": "Use the following link to download the file:",
 			"shareNotSupported": "Sharing is not supported on this browser."
 		},
+		"report": {
+			"reportContent": "Report content",
+			"reportRawText": "Ensuring our platform remains free of illegal content is a top priority for us. You can report content using the form below or by emailing {mail}.",
+			"code": "Code you want to report",
+			"reason": "Reason for report",
+			"reasonPlaceholder": "Select a reason",
+			"other": "Please specify the reason",
+			"reasons": {
+				"copyrightInfringement": "Copyright infringement",
+				"malwareOrVirus": "Malware or virus",
+				"illegalContent": "Illegal content",
+				"harassmentOrAbuse": "Harassment or abuse",
+				"sensitiveOrPersonalInformation": "Sensitive or personal information",
+				"violentOrGraphicContent": "Violent or graphic content",
+				"spamOrMisleadingContent": "Spam or misleading content",
+				"hateSpeechOrDiscrimination": "Hate speech or discrimination",
+				"inappropriateOrOffensiveContent": "Inappropriate or offensive content",
+				"dislikeContent": "I don't like the content",
+				"other": "Other (please specify)"
+			},
+			"invalidCode": "Make sure to enter a valid downlaod code",
+			"reasonRequired": "A valid reason is required",
+			"additionalRequired": "Additional information is required",
+			"mailTemplate": {
+				"subject": "Report of Download Code: {code}",
+				"body": "To Whom It May Concern,%0DI hope this message finds you well. I am writing to report a download code associated with a file on your platform.%0D %3Cb%3EDownload Code: {code}%3C%2Fb%3E%0D %3Cb%3EReason for Reporting: {reason}%3C%2Fb%3E%0DPlease investigate this matter at your earliest convenience. If you require any additional information, feel free to contact me.%0DThank you for your attention to this issue.%0DBest regards,%0DYOUR NAME"
+			}
+		},
 		"general": {
 			"or": "or",
 			"notice": "Notice",

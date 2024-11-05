@@ -30,6 +30,34 @@
 			"here": "hier",
 			"preserveFiles": "Dokumente für {extendDuration} Tage aufbewahren",
 			"preserveFilesDescription": "Standardmäßig werden Dokumente für {defaultDuration} Stunden aufbewahrt"
+		},
+		"report": {
+			"reportContent": "Inhalt melden",
+			"reportRawText": "Es ist unsere oberste Priorität, sicherzustellen, dass unsere Plattform frei von illegalen Inhalten bleibt. Du kannst Inhalte über das untenstehende Formular oder per E-Mail an {mail} melden.",
+			"code": "Code, den du melden möchtest",
+			"reason": "Grund für die Meldung",
+			"reasonPlaceholder": "Wähle einen Grund",
+			"other": "Bitte gib den Grund an",
+			"reasons": {
+				"copyrightInfringement": "Urheberrechtsverletzung",
+				"malwareOrVirus": "Malware oder Virus",
+				"illegalContent": "Illegale Inhalte",
+				"harassmentOrAbuse": "Belästigung oder Missbrauch",
+				"sensitiveOrPersonalInformation": "Sensible oder persönliche Informationen",
+				"violentOrGraphicContent": "Gewalttätige oder grafische Inhalte",
+				"spamOrMisleadingContent": "Spam oder irreführende Inhalte",
+				"hateSpeechOrDiscrimination": "Hassrede oder Diskriminierung",
+				"inappropriateOrOffensiveContent": "Unangemessene oder anstößige Inhalte",
+				"dislikeContent": "Ich mag den Inhalt nicht",
+				"other": "Andere (bitte angeben)"
+			},
+			"invalidCode": "Bitte gib einen gültigen Download-Code ein",
+			"reasonRequired": "Ein gültiger Grund ist erforderlich",
+			"additionalRequired": "Zusätzliche Informationen sind erforderlich",
+			"mailTemplate": {
+				"subject": "Meldung des Download-Codes: {code}",
+				"body": "Sehr geehrte Damen und Herren,%0DIch schreibe Ihnen, um einen Download-Code zu melden, der mit einer Datei auf Ihrer Plattform verbunden ist.%0D %3Cb%3EDownload-Code: {code}%3C%2Fb%3E%0D %3Cb%3EGrund für die Meldung: {reason}%3C%2Fb%3E%0DBitte untersuchen Sie diese Angelegenheit so bald wie möglich. Wenn Sie weitere Informationen benötigen, können Sie mich gerne kontaktieren.%0DVielen Dank für Ihre Aufmerksamkeit.%0DMit freundlichen Grüßen,%0DIHR NAME"
+			}
 		}
 	}
 }
