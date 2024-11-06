@@ -1,17 +1,24 @@
 "use server"
 
 const fs = require('fs');
-const { statfs } = require('fs');
 const path = require('path');
 const archiver = require('archiver');
 const { InfluxDB, Point } = require('@influxdata/influxdb-client')
 const { getMIMEType } = require('node-mime-types');
+const { exec } = require('child_process');
+const os = require('os');
 
 let client;
 if (process.env.ENABLE_METRICS) {
     if (process.env.INFLUX_URL && process.env.INFLUX_TOKEN && process.env.INFLUX_ORG && process.env.INFLUX_BUCKET) {
         client = new InfluxDB({ url: process.env.INFLUX_URL, token: process.env.INFLUX_TOKEN });
+
+        const dataDir = path.join(process.cwd(), 'data');
+        if (!fs.existsSync(dataDir)) {
+            fs.mkdirSync(dataDir);
+        }
         calculateMetrics(path.join(process.cwd(), 'data'));
+
     } else {
         const missingEnvVars = [];
         if (!process.env.INFLUX_URL) missingEnvVars.push('INFLUX_URL');
@@ -60,16 +67,36 @@ function generateRandomCode() {
     return result;
 }
 
-function getDiskUsage(directory) {
+
+function getDiskUsage() {
+    const directory = process.env.NODE_ENV == 'development' ? "/" : "/host";
+
     return new Promise((resolve, reject) => {
-        statfs(directory, (error, stats) => {
-            if (error) {
-                return reject(error);
-            }
-            const total = stats.blocks * stats.bsize;
-            const free = stats.bfree * stats.bsize;
-            resolve({ total, free });
-        });
+        if (os.platform() === 'win32') {
+            exec(`wmic logicaldisk get size,freespace,caption`, (error, stdout) => {
+                if (error) {
+                    return reject(error);
+                }
+                const lines = stdout.trim().split('\n');
+                const diskInfo = lines.find(line => line.includes(directory[0].toUpperCase() + ':'));
+                if (diskInfo) {
+                    const [_, free, total] = diskInfo.trim().split(/\s+/).map(Number);
+                    resolve({ total, free });
+                } else {
+                    reject(new Error('Disk information not found.'));
+                }
+            });
+        } else {
+            exec(`df -k "${directory}"`, (error, stdout) => {
+                if (error) {
+                    return reject(error);
+                }
+
+                const lines = stdout.trim().split('\n');
+                const [total, used, free] = lines[1].split(/\s+/).slice(1, 4).map(Number);
+                resolve({ total: total * 1024, free: free * 1024 });
+            });
+        }
     });
 }
 
@@ -118,7 +145,7 @@ async function calculateMetrics(dataDir) {
         await updateMetric(`file_type_${mime}`, size, false);
     }
 
-    const { total, free } = await getDiskUsage(dataDir);
+    const { total, free } = await getDiskUsage();
     const totalStorage = total;
     const usedStorage = total - free;
     await updateMetric('total_storage', totalStorage, false);

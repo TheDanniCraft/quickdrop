@@ -29,7 +29,7 @@ RUN node-prune
 RUN rm -rf /app/src /app/tests /app/.git
 
 # Second stage: Create a clean, optimized image
-FROM oven/bun:distroless AS runner
+FROM oven/bun:slim AS runner
 
 # Set the working directory
 WORKDIR /app
