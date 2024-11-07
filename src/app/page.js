@@ -1,20 +1,16 @@
 "use client"
 
-import { ActionIcon, Anchor, Button, Center, Checkbox, Divider, Flex, Group, HoverCard, Image, List, Modal, Paper, rem, Select, Space, Stack, Text, TextInput } from "@mantine/core";
+import { ActionIcon, Anchor, Button, Center, Checkbox, Divider, Flex, Group, HoverCard, Image, List, Modal, Paper, rem, Space, Stack, Text, TextInput } from "@mantine/core";
 import { Dropzone } from "@mantine/dropzone";
-import { IconAlertTriangle, IconAlertTriangleFilled, IconFile, IconShare, IconUpload, IconX } from "@tabler/icons-react";
+import { IconFile, IconShare, IconUpload, IconX } from "@tabler/icons-react";
 import { useEffect, useState, useCallback } from "react";
 import { useTranslations } from 'next-intl';
 import { getFiles, saveFiles, purgeOldFolders, updateMetric } from "./action";
 import { notifications } from "@mantine/notifications";
 import { useSearchParams } from 'next/navigation';
 import { useDisclosure } from "@mantine/hooks";
-import { useQRCode } from 'next-qrcode';
-import { useForm } from "@mantine/form";
-
-const SECRET_PHRASE = "confirm";
-const MAX_FILE_SIZE = 25 * 1000 * 1000; // 25MB limit
-const SIZE_UNITS = ['B', 'KB', 'MB', 'GB'];
+import { MAX_FILE_SIZE, SECRET_PHRASE, SIZE_UNITS, EXTEND_DURATION, DEFAULT_DURATION } from "@/constants";
+import { ReportModal, UploadConfirmModal } from "./components"
 
 export default function Home() {
   const t = useTranslations('Home');
@@ -30,21 +26,6 @@ export default function Home() {
   const [reportOpened, { open: reportOpen, close: reportClose }] = useDisclosure(false);
   const [origin, setOrigin] = useState('');
   const searchParams = useSearchParams();
-  const { SVG } = useQRCode();
-  const reportForm = useForm({
-    initialValues: {
-      code: '',
-      reason: '',
-      aditional: ''
-    },
-    validate: {
-      code: (value) => /^[A-Z0-9]{6}$/.test(value) ? null : t('report.invalidCode'),
-      reason: (value) => value ? null : t('report.reasonRequired'),
-      aditional: (value, values) => values.reason === t('report.reasons.other') && !value ? t('report.additionalRequired') : null
-    }
-  });
-  const DEFAULT_DURATION = 2; // hours
-  const EXTEND_DURATION = 7; // days
 
   useEffect(() => {
     setOrigin(window.location.origin);
@@ -219,7 +200,6 @@ export default function Home() {
   return (
     <>
       <Center className="grow-y">
-
         <Stack>
           <Paper shadow="xs" p="xl" radius="lg" withBorder style={{ borderColor: '#1a65a3' }} className="main">
             <Center>
@@ -347,109 +327,9 @@ export default function Home() {
         </Stack>
       </Center>
 
-      <Modal opened={fileSavedOpened} onClose={fileSavedClose} title={t('upload.fileSaved')}>
-        <Stack>
-          <Center>
-            <SVG
-              text={`${origin}?code=${downloadCode}`}
-              options={{
-                level: 'M',
-                margin: 3,
-                scale: 4,
-                width: 200,
-                color: {
-                  dark: '#C9C9C9',
-                  light: '#FFFFFF00',
-                },
-              }}
-            />
-          </Center>
+      <UploadConfirmModal fileSavedOpened={fileSavedOpened} fileSavedClose={fileSavedClose} keepLonger={keepLonger} origin={origin} downloadCode={downloadCode} />
 
-          <Text>{t('upload.fileSavedMessage')}</Text>
-          <Center>
-            <Text fw={1000}>{downloadCode}</Text>
-            <Space w="xs" />
-            <ActionIcon
-              size="xs"
-              onClick={() => {
-                if (navigator.share) {
-                  navigator.share({
-                    title: t('share.shareTitle'),
-                    text: t('share.shareText'),
-                    url: `${origin}?code=${downloadCode}`,
-                  }).catch((error) => {
-                    console.error('Error sharing:', error);
-                  });
-                } else {
-                  notifications.show({
-                    title: t('general.error'),
-                    message: t('share.shareNotSupported'),
-                    color: 'red',
-                  });
-                }
-              }}
-              variant="transparent"
-            >
-              <IconShare />
-            </ActionIcon>
-          </Center>
-          <Text size="xs">{t('download.fileExpires', { date: new Date(Date.now() + (keepLonger ? (EXTEND_DURATION * 24) : DEFAULT_DURATION) * 60 * 60 * 1000).toLocaleString() })}</Text>
-        </Stack>
-      </Modal>
-
-      <Modal opened={reportOpened} onClose={reportClose} title={t('report.reportContent')}>
-        <Text>{t.rich('report.reportRawText', { mail: <Anchor key="report-mail" href={`mailto:${process.env.NEXT_PUBLIC_REPORT_MAIL}`}>{process.env.NEXT_PUBLIC_REPORT_MAIL}</Anchor> })}</Text>
-        <Divider my="md" />
-        <form onSubmit={reportForm.onSubmit((values) => {
-          const reason = values.reason === t('report.reasons.other') ? values.aditional : values.reason;
-          window.location.href = `mailto:${process.env.NEXT_PUBLIC_REPORT_MAIL}?subject=${t('report.mailTemplate.subject', { code: values.code })}&body=${t('report.mailTemplate.body', { code: values.code, reason })}`;
-        })}>
-          <TextInput
-            withAsterisk
-            maxLength={6}
-            label={t('report.code')}
-            placeholder="K923HE"
-            key={reportForm.key('code')}
-            {...reportForm.getInputProps('code')}
-            onChange={(event) => {
-              reportForm.setFieldValue('code', event.target.value.toUpperCase());
-            }}
-          />
-          <Space h="xs" />
-          <Select
-            label={t('report.reason')}
-            placeholder={t('report.reasonPlaceholder')}
-            withAsterisk
-            data={
-              [
-                t('report.reasons.copyrightInfringement'),
-                t('report.reasons.malwareOrVirus'),
-                t('report.reasons.illegalContent'),
-                t('report.reasons.harassmentOrAbuse'),
-                t('report.reasons.sensitiveOrPersonalInformation'),
-                t('report.reasons.violentOrGraphicContent'),
-                t('report.reasons.spamOrMisleadingContent'),
-                t('report.reasons.hateSpeechOrDiscrimination'),
-                t('report.reasons.inappropriateOrOffensiveContent'),
-                t('report.reasons.dislikeContent'),
-                t('report.reasons.other')
-              ]
-            }
-            key={reportForm.key('reason')}
-            {...reportForm.getInputProps('reason')}
-          />
-          <Space h="xs" />
-          <TextInput
-            placeholder={t('report.other')}
-            hidden={reportForm.values.reason == t('report.reasons.other') ? false : true}
-            withAsterisk
-            key={reportForm.key('aditional')}
-            {...reportForm.getInputProps('aditional')}
-          />
-          <Space h="xs" />
-          <Button color="red" type="submit" disabled={!reportForm.isValid()}>Send report</Button>
-        </form>
-      </Modal>
+      <ReportModal reportOpened={reportOpened} reportClose={reportClose} />
     </>
   );
 }
