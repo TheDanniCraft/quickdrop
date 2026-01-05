@@ -2,5 +2,55 @@
   "$schema": "https://docs.renovatebot.com/renovate-schema.json",
   "extends": [
     "config:recommended"
+  ],
+  "rangeStrategy": "bump",
+  "branchPrefix": "renovate/",
+  "additionalBranchPrefix": "{{{manager}}}/",
+  "labels": ["dependencies", "renovate"],
+  "commitMessagePrefix": "⬆️ Bump ",
+  "commitMessageAction": "",
+  "commitMessageTopic": "{{depName}}",
+  "commitMessageExtra": " to {{newVersion}}",
+  "packageRules": [
+    {
+      "matchPackagePatterns": ["^next$", "^react$", "^react-dom$", "^eslint-config-next$", "^next-"],
+      "groupName": "next/react ecosystem"
+    },
+    {
+      "matchPackagePatterns": ["^@mantine/"],
+      "groupName": "mantine monorepo"
+    },
+    {
+      "matchPackagePatterns": ["^tailwindcss$", "^postcss", "^postcss-"],
+      "groupName": "css tooling"
+    },
+    {
+      "matchPackagePatterns": ["^next-intl$"],
+      "groupName": "i18n (next-intl)"
+    },
+    {
+      "matchPackagePatterns": ["^next-qrcode$"],
+      "groupName": "qrcode (next-qrcode)"
+    },
+    {
+      "matchPackagePatterns": ["^@tabler/icons-react$"],
+      "groupName": "tabler icons"
+    },
+    {
+      "matchPackagePatterns": ["^@influxdata/influxdb-client$"],
+      "groupName": "influxdb client"
+    },
+    {
+      "matchPackagePatterns": ["^archiver$", "^node-mime-types$"],
+      "groupName": "server utils"
+    },
+    {
+      "matchManagers": ["github-actions"],
+      "groupName": "github actions"
+    },
+    {
+      "matchManagers": ["dockerfile"],
+      "groupName": "docker images"
+    }
   ]
 }
