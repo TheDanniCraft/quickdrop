@@ -17,7 +17,7 @@
 		"@mantine/notifications": "^8.3.13",
 		"@tabler/icons-react": "^3.36.1",
 		"archiver": "^7.0.1",
-		"next": "16.1.4",
+		"next": "16.1.5",
 		"next-intl": "^4.7.0",
 		"next-qrcode": "^2.5.1",
 		"node-mime-types": "^1.1.2",
