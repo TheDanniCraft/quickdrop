@@ -2,7 +2,7 @@
 
 const fs = require('fs');
 const path = require('path');
-const archiver = require('archiver');
+const { ZipArchive } = require('archiver');
 const { InfluxDB, Point } = require('@influxdata/influxdb-client')
 const { getMIMEType } = require('node-mime-types');
 const { exec } = require('child_process');
@@ -189,7 +189,7 @@ export async function getFiles(code) {
     }
 
     if (fs.existsSync(folderPath)) {
-        const archive = archiver('zip', {
+        const archive = new ZipArchive({
             zlib: { level: 1 }
         });
 
