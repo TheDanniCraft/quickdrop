@@ -3,7 +3,7 @@
 import { ActionIcon, Anchor, Button, Center, Checkbox, Divider, Flex, Group, HoverCard, Image, List, Modal, Paper, rem, Space, Stack, Text, TextInput } from "@mantine/core";
 import { Dropzone } from "@mantine/dropzone";
 import { IconFile, IconShare, IconUpload, IconX } from "@tabler/icons-react";
-import { useEffect, useState, useCallback } from "react";
+import { useEffect, useState, useCallback, useSyncExternalStore, useEffectEvent } from "react";
 import { useTranslations } from 'next-intl';
 import { getFiles, saveFiles, purgeOldFolders, updateMetric } from "./action";
 import { notifications } from "@mantine/notifications";
@@ -12,66 +12,78 @@ import { useDisclosure } from "@mantine/hooks";
 import { MAX_FILE_SIZE, SECRET_PHRASE, SIZE_UNITS, EXTEND_DURATION, DEFAULT_DURATION } from "@/constants";
 import { ReportModal, UploadConfirmModal } from "./components"
 
+function subscribeToOrigin() {
+  return () => {};
+}
+
 export default function Home() {
   const t = useTranslations('Home');
-  const [keyError, setKeyError] = useState(false);
-  const [code, setCode] = useState('');
+  const [requestError, setKeyError] = useState(false);
+  const searchParams = useSearchParams();
+  const queryCode = (searchParams.get('code') || '').toUpperCase();
+  const [codeInput, setCodeInput] = useState(null);
+  const code = codeInput?.query === queryCode ? codeInput.value : queryCode;
+  const setCode = (value) => setCodeInput({ query: queryCode, value });
   const [files, setFiles] = useState([]);
   const [keepLonger, setKeepLonger] = useState(false);
-  const [loading, setLoading] = useState(false);
+  const [busy, setLoading] = useState(false);
+  const [completedQuery, setCompletedQuery] = useState(null);
+  const validQuery = /^[A-Z0-9]{6}$/.test(queryCode);
+  const loading = busy || (validQuery && completedQuery !== queryCode);
+  const keyError = requestError || (codeInput?.query !== queryCode && queryCode.length === 6 && !validQuery ? t('download.invalidKey') : false);
   const [downloadCode, setDownloadCode] = useState('');
   const [pendingFiles, setPendingFiles] = useState(null);
   const [userPhrase, setUserPhrase] = useState('');
   const [fileSavedOpened, { open: fileSavedOpen, close: fileSavedClose }] = useDisclosure(false);
   const [reportOpened, { open: reportOpen, close: reportClose }] = useDisclosure(false);
-  const [origin, setOrigin] = useState('');
-  const searchParams = useSearchParams();
+  const [expiresAt, setExpiresAt] = useState(null);
+  const origin = useSyncExternalStore(
+    subscribeToOrigin,
+    () => window.location.origin,
+    () => ''
+  );
 
-  useEffect(() => {
-    setOrigin(window.location.origin);
-  }, []);
+  const downloadFiles = useCallback(async (newCode) => {
+    const files = await getFiles(newCode);
+    setKeyError(false);
+    if (!files) {
+      setKeyError(t('download.noFilesFound'));
+      setLoading(false);
+      return;
+    }
+
+    const blob = new Blob([new Uint8Array(files)], { type: 'application/zip' });
+    const url = window.URL.createObjectURL(blob);
+    const a = document.createElement('a');
+    a.style.display = 'none';
+    a.href = url;
+    a.download = `${newCode}.zip`;
+    document.body.appendChild(a);
+    a.click();
+    document.body.removeChild(a);
+    notifications.show({
+      title: t('download.success'),
+      message: (
+        <>
+          {t('download.fileDownloadStart')}<br />
+          {t('download.fileDownloadClick', { url: <Anchor href={url}>{t('general.here')}</Anchor> })}
+        </>
+      ),
+      color: 'green',
+    });
+    setLoading(false);
+  }, [t, setLoading]);
 
   const handleInputChange = useCallback(async (newCode) => {
     setKeyError(false);
-
-    if (newCode.length === 6) {
-      setLoading(true);
-      const isValid = /^[A-Z0-9]{6}$/.test(newCode);
-      if (isValid) {
-        const files = await getFiles(newCode);
-
-        if (!files) {
-          setKeyError(t('download.noFilesFound'));
-          setLoading(false);
-          return;
-        }
-
-        const blob = new Blob([new Uint8Array(files)], { type: 'application/zip' });
-        const url = window.URL.createObjectURL(blob);
-        const a = document.createElement('a');
-        a.style.display = 'none';
-        a.href = url;
-        a.download = `${newCode}.zip`;
-        document.body.appendChild(a);
-        a.click();
-        document.body.removeChild(a);
-        notifications.show({
-          title: t('download.success'),
-          message: (
-            <>
-              {t('download.fileDownloadStart')}<br />
-              {t('download.fileDownloadClick', { url: <Anchor href={url}>{t('general.here')}</Anchor> })}
-            </>
-          ),
-          color: 'green',
-        });
-        setLoading(false);
-      } else {
-        setKeyError(t('download.invalidKey'));
-        setLoading(false);
-      }
+    if (newCode.length !== 6) return;
+    if (!/^[A-Z0-9]{6}$/.test(newCode)) {
+      setKeyError(t('download.invalidKey'));
+      return;
     }
-  }, [t]);
+    setLoading(true);
+    await downloadFiles(newCode);
+  }, [t, downloadFiles, setLoading]);
 
   const handleUpload = useCallback(async (files, skipSizeCheck = false) => {
     setLoading(true);
@@ -99,18 +111,19 @@ export default function Home() {
     }
 
     setDownloadCode(await saveFiles(serializableFiles, keepLonger ? (EXTEND_DURATION * 24) : DEFAULT_DURATION));
+    setExpiresAt(Date.now() + (keepLonger ? EXTEND_DURATION * 24 : DEFAULT_DURATION) * 60 * 60 * 1000);
     fileSavedOpen();
     setLoading(false);
     setFiles([]);
-  }, [keepLonger, fileSavedOpen]);
+  }, [keepLonger, fileSavedOpen, t, setLoading, setFiles]);
 
+  const downloadFromQuery = useEffectEvent(async (value) => {
+    if (!/^[A-Z0-9]{6}$/.test(value)) return;
+    try { await downloadFiles(value); } finally { setCompletedQuery(value); }
+  });
   useEffect(() => {
-    const codeParam = searchParams.get('code');
-    if (codeParam) {
-      setCode(codeParam.toUpperCase());
-      handleInputChange(codeParam.toUpperCase());
-    }
-  }, [searchParams, handleInputChange]);
+    if (queryCode) downloadFromQuery(queryCode);
+  }, [queryCode]);
 
   useEffect(() => {
     const handleKeydown = async (event) => {
@@ -136,7 +149,7 @@ export default function Home() {
 
     document.addEventListener('keydown', handleKeydown);
     return () => document.removeEventListener('keydown', handleKeydown);
-  }, [pendingFiles, userPhrase, handleUpload]);
+  }, [pendingFiles, userPhrase, handleUpload, t]);
 
   useEffect(() => {
     const interval = setInterval(purgeOldFolders, 60000);
@@ -204,6 +217,7 @@ export default function Home() {
           <Paper shadow="xs" p="xl" radius="lg" withBorder style={{ borderColor: '#1a65a3' }} className="main">
             <Center>
               <Image
+                alt="QuickDrop"
                 h={150}
                 w="auto"
                 fit="contain"
@@ -327,7 +341,7 @@ export default function Home() {
         </Stack>
       </Center>
 
-      <UploadConfirmModal fileSavedOpened={fileSavedOpened} fileSavedClose={fileSavedClose} keepLonger={keepLonger} origin={origin} downloadCode={downloadCode} />
+      <UploadConfirmModal fileSavedOpened={fileSavedOpened} fileSavedClose={fileSavedClose} expiresAt={expiresAt} origin={origin} downloadCode={downloadCode} />
 
       <ReportModal reportOpened={reportOpened} reportClose={reportClose} />
     </>

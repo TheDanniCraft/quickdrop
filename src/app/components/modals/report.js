@@ -23,7 +23,7 @@ export default function ReportModal({ reportOpened, reportClose }) {
             <Divider my="md" />
             <form onSubmit={reportForm.onSubmit((values) => {
                 const reason = values.reason === t('report.reasons.other') ? values.aditional : values.reason;
-                window.location.href = `mailto:${process.env.NEXT_PUBLIC_REPORT_MAIL}?subject=${t('report.mailTemplate.subject', { code: values.code })}&body=${t('report.mailTemplate.body', { code: values.code, reason })}`;
+                window.location.assign(`mailto:${process.env.NEXT_PUBLIC_REPORT_MAIL}?subject=${t('report.mailTemplate.subject', { code: values.code })}&body=${t('report.mailTemplate.body', { code: values.code, reason })}`);
             })}>
                 <TextInput
                     withAsterisk

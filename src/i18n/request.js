@@ -8,7 +8,7 @@ const timeZonesByLang = {
 };
 
 export default getRequestConfig(async () => {
-    const acceptLanguage = headers().get('accept-language') || 'en';
+    const acceptLanguage = (await headers()).get('accept-language') || 'en';
     let locale = acceptLanguage.split(',')[0].split('-')[0];
 
     try {
