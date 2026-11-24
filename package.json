@@ -16,7 +16,7 @@
 		"@mantine/form": "^9.8.1",
 		"@mantine/hooks": "^9.8.1",
 		"@mantine/notifications": "^9.8.1",
-		"@tabler/icons-react": "^3.52.0",
+		"@tabler/icons-react": "^3.53.0",
 		"archiver": "^8.0.0",
 		"next": "16.4.6",
 		"next-intl": "^4.15.3",
